@@ -33,31 +33,30 @@ suppressPackageStartupMessages({
 # ----------------------------
 # 1. Load model object
 # ----------------------------
-model_object_path <- file.path("..", "data", "processed", "astrocytoma_model_objects.rds")
-fit_fallback_path <- file.path("..", "data", "processed", "astrocytoma_pipeline", "02_outputs", "fit_final_training_cox.rds")
-df_fallback_path  <- file.path("..", "data", "processed", "astrocytoma_pipeline", "01_outputs", "03_final_model_dataset_split.rds")
 
-if (file.exists(model_object_path)) {
-  obj <- readRDS(model_object_path)
-  fit <- obj$cph_fit
-  df_ref <- as.data.frame(obj$df2)
-} else if (file.exists(fit_fallback_path) && file.exists(df_fallback_path)) {
-  fit <- readRDS(fit_fallback_path)
-  df_ref <- as.data.frame(readRDS(df_fallback_path))
-} else {
+model_object_candidates <- c(
+  file.path("data", "processed", "astrocytoma_model_objects.rds"),
+  "astrocytoma_model_objects.rds",
+  file.path("..", "data", "processed", "astrocytoma_model_objects.rds")
+)
+
+model_object_path <- model_object_candidates[file.exists(model_object_candidates)][1]
+
+if (is.na(model_object_path)) {
   stop(
     paste0(
-      "Could not find the model object or fallback model files.\n\n",
-      "Expected one of these setups:\n",
-      "1) ", normalizePath(model_object_path, winslash = "/", mustWork = FALSE), "\n",
-      "or\n",
-      "2) ", normalizePath(fit_fallback_path, winslash = "/", mustWork = FALSE), "\n",
-      "   ", normalizePath(df_fallback_path, winslash = "/", mustWork = FALSE), "\n\n",
-      "Make sure the app folder is inside the project folder and that the data/processed folder is one level above shiny/."
+      "Could not find astrocytoma_model_objects.rds.\n\n",
+      "Searched these paths:\n",
+      paste(normalizePath(model_object_candidates, winslash = "/", mustWork = FALSE), collapse = "\n")
     ),
     call. = FALSE
   )
 }
+
+obj <- readRDS(model_object_path)
+
+fit <- obj$cph_fit
+df_ref <- as.data.frame(obj$df2)
 
 # ----------------------------
 # 2. Required model variables
